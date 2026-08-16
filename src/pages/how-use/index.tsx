@@ -7,7 +7,7 @@ export default function ComoUsar() {
       {/* Lado esquerdo roxo */}
       <div className="como-usar-sidebar">
         <h1>Como usar</h1>
-        <Link to="/tarefas">Voltar para tarefas</Link>
+        <Link to="/">Voltar para Home</Link>
       </div>
 
       {/* Lado direito com instruções */}

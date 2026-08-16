@@ -66,7 +66,7 @@ export default function Home() {
           </form>
         </div>
         <div className="link-como-usar">
-          <Link to="/como-usar">Como usar</Link>
+          <Link to="/how-use">Como usar</Link>
         </div>
       </div>
 
