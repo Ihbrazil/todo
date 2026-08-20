@@ -1,103 +1,180 @@
-import React, { useState } from 'react'
-import { Link } from 'react-router-dom'
-import './styles.css'
+import { useState, useEffect } from "react";
+import { MdEdit, MdDelete } from "react-icons/md";
+import "./styles.css";
 
-interface Tarefa {
-  id: number
-  titulo: string
-  categoria: string
-  data: string
-  descricao: string
+interface Task {
+  id: string;
+  title: string;
+  category: string;
+  description: string;
+  date: string;
 }
 
+const STORAGE_KEY = "tasks";
+
 export default function Home() {
-  const [tarefas, setTarefas] = useState<Tarefa[]>([
-    { id: 1, titulo: 'Tarefa 1', categoria: 'Categoria 1', data: '23/10/2022', descricao: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut interdum pharetra est in efficitur' },
-    { id: 2, titulo: 'Tarefa 2', categoria: 'Categoria 2', data: '25/10/2022', descricao: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut interdum pharetra est in efficitur' }
-  ])
+  const [titulo, setTitulo] = useState("");
+  const [categoria, setCategoria] = useState("");
+  const [data, setData] = useState("");
+  const [descricao, setDescricao] = useState("");
+  const [id, setId] = useState("");
 
-  const [form, setForm] = useState({
-    titulo: '',
-    categoria: '',
-    data: '',
-    descricao: ''
-  })
+  const [tarefas, setTarefas] = useState<Task[]>([]);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    if (!form.titulo) return
-    const novaTarefa: Tarefa = { id: Date.now(), ...form }
-    setTarefas([novaTarefa, ...tarefas])
-    setForm({ titulo: '', categoria: '', data: '', descricao: '' })
+  // Carregar tarefas ao iniciar
+  useEffect(() => {
+  const tasksSalvas = localStorage.getItem(STORAGE_KEY);
+
+  if (tasksSalvas) {
+    setTarefas(JSON.parse(tasksSalvas));
+  } else {
+      const tarefasIniciais: Task[] = [
+        {
+          id: "1",
+          title: "Tarefa exemplo",
+          category: "Trabalho",
+          description: "Descrição de teste",
+          date: "2023-05-03",
+        }
+      ];
+
+      setTarefas(tarefasIniciais);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(tarefasIniciais));
+    }
+  }, []);
+
+
+  function limparCampos() {
+    setTitulo("");
+    setCategoria("");
+    setData("");
+    setDescricao("");
+    setId("");
   }
 
-  const excluirTarefa = (id: number) => {
-    setTarefas(tarefas.filter(t => t.id !== id))
+  function submitForm(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (id) {
+      editTask();
+      return;
+    }
+
+    const novaTarefa: Task = {
+      id: String(Date.now()),
+      title: titulo,
+      category: categoria,
+      date: data,
+      description: descricao,
+    };
+
+    const copia = [...tarefas, novaTarefa];
+
+    setTarefas(copia);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(copia));
+
+    limparCampos();
+  }
+
+  function editTask() {
+    const posicao = tarefas.findIndex((tarefa) => tarefa.id === id);
+
+    const copia = [...tarefas];
+
+    copia[posicao] = {
+      id,
+      title: titulo,
+      category: categoria,
+      date: data,
+      description: descricao,
+    };
+
+    setTarefas(copia);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(copia));
+
+    limparCampos();
+  }
+
+  function apagarTarefa(id: string) {
+    const filtrado = tarefas.filter((tarefa) => tarefa.id !== id);
+
+    setTarefas(filtrado);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(filtrado));
+  }
+
+  function carregarParaEdicao(tarefa: Task) {
+    setTitulo(tarefa.title);
+    setCategoria(tarefa.category);
+    setData(tarefa.date);
+    setDescricao(tarefa.description);
+    setId(tarefa.id);
   }
 
   return (
-    <div className="home-container">
-      {/* Coluna Esquerda: Cadastro */}
-      <div className="card-cadastro">
-        <div>
-          <h2>Cadastrar Tarefa</h2>
-          <form onSubmit={handleSubmit}>
-            <input 
-              type="text" placeholder="Título" 
-              value={form.titulo} onChange={e => setForm({...form, titulo: e.target.value})}
-              required
-            />
-            <select 
-              value={form.categoria} onChange={e => setForm({...form, categoria: e.target.value})}
-            >
-              <option value="">Categoria</option>
-              <option value="Categoria 1">Categoria 1</option>
-              <option value="Categoria 2">Categoria 2</option>
-            </select>
-            <input 
-              type="text" placeholder="Data (ex: 23/10/2022)" 
-              value={form.data} onChange={e => setForm({...form, data: e.target.value})}
-            />
-            <input 
-              type="text" placeholder="Descrição" 
-              value={form.descricao} onChange={e => setForm({...form, descricao: e.target.value})}
-            />
-            <button type="submit">Salvar</button>
-          </form>
-        </div>
+    <div className="container_home">
+      <div className="form">
+        <form onSubmit={submitForm}>
+          <h2>Cadastrar tarefa</h2>
+
+          <input
+            value={titulo}
+            placeholder="Título"
+            onChange={(e) => setTitulo(e.target.value)}
+          />
+
+          <input
+            value={categoria}
+            placeholder="Categoria"
+            onChange={(e) => setCategoria(e.target.value)}
+          />
+
+          <input
+            type="date"
+            value={data}
+            onChange={(e) => setData(e.target.value)}
+          />
+
+          <textarea
+            value={descricao}
+            placeholder="Descrição"
+            onChange={(e) => setDescricao(e.target.value)}
+          />
+
+          <button type="submit">
+            {id ? "Salvar edição" : "Cadastrar"}
+          </button>
+        </form>
+
+        {/* LINK COMO USAR */}
         <div className="link-como-usar">
-          <Link to="/how-use">Como usar</Link>
+          <a href="/how-use">Como usar o aplicativo</a>
         </div>
       </div>
 
-      {/* Coluna Direita: Listagem */}
-      <div className="card-listagem">
-        <div>
-          <div className="listagem-header">
-            <h3>Minhas Tarefas</h3>
-            <span>Total: {tarefas.length} tarefas</span>
+      <div className="lista">
+        <h2>Tarefas cadastradas</h2>
+
+        {tarefas.length === 0 && <p>Nenhuma tarefa cadastrada.</p>}
+
+        {tarefas.map((tarefa) => (
+          <div key={tarefa.id} className="item">
+            <h3>{tarefa.title}</h3>
+            <p><strong>Categoria:</strong> {tarefa.category}</p>
+            <p><strong>Data:</strong> {tarefa.date}</p>
+            <p>{tarefa.description}</p>
+
+            <div className="actions">
+              <button onClick={() => carregarParaEdicao(tarefa)}>
+                <MdEdit size={22} />
+              </button>
+
+              <button onClick={() => apagarTarefa(tarefa.id)}>
+                <MdDelete size={22} />
+              </button>
+            </div>
           </div>
-          
-          <div className="tarefas-list">
-            {tarefas.map(tarefa => (
-              <div key={tarefa.id} className="tarefa-item">
-                <div className="tarefa-topo">
-                  <div>
-                    <h4>{tarefa.titulo}</h4>
-                    <span>{tarefa.categoria}</span>
-                  </div>
-                  <div className="tarefa-acoes">
-                    <span>{tarefa.data}</span>
-                    <button className="btn-editar">✏️</button>
-                    <button onClick={() => excluirTarefa(tarefa.id)} className="btn-excluir">🗑️</button>
-                  </div>
-                </div>
-                <p>{tarefa.descricao}</p>
-              </div>
-            ))}
-          </div>
-        </div>
+        ))}
       </div>
     </div>
-  )
+  );
 }
